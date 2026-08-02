@@ -3,6 +3,7 @@
 ## ルール
 
 - 作業後は必ずGitHubにpushすること
+- VS Code側の権限モードは「Edit Automatically」で運用する。「Auto」モードだとgit commit/pushが安全確認のためブロックされることがある(2026-07-31に確認済み)
 
 ## プロジェクト一覧
 
