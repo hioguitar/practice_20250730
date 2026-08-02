@@ -1,0 +1,457 @@
+<style>
+  :root {
+    --bg: #ece7db;
+    --bg-alt: #e1d9c4;
+    --ink: #2a2318;
+    --ink-soft: #5a4f3d;
+    --turmeric: #a35d22;
+    --turmeric-deep: #7c4315;
+    --moss: #55613f;
+    --line: rgba(42, 35, 24, 0.16);
+    --card-bg: #f4efe2;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1a1610;
+      --bg-alt: #221c14;
+      --ink: #ece4d3;
+      --ink-soft: #bdaf94;
+      --turmeric: #d68a45;
+      --turmeric-deep: #f0a565;
+      --moss: #93a67a;
+      --line: rgba(236, 228, 211, 0.16);
+      --card-bg: #221c14;
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --bg: #1a1610;
+    --bg-alt: #221c14;
+    --ink: #ece4d3;
+    --ink-soft: #bdaf94;
+    --turmeric: #d68a45;
+    --turmeric-deep: #f0a565;
+    --moss: #93a67a;
+    --line: rgba(236, 228, 211, 0.16);
+    --card-bg: #221c14;
+  }
+
+  :root[data-theme="light"] {
+    --bg: #ece7db;
+    --bg-alt: #e1d9c4;
+    --ink: #2a2318;
+    --ink-soft: #5a4f3d;
+    --turmeric: #a35d22;
+    --turmeric-deep: #7c4315;
+    --moss: #55613f;
+    --line: rgba(42, 35, 24, 0.16);
+    --card-bg: #f4efe2;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: "游明朝", "Yu Mincho", "Hiragino Mincho ProN", "Noto Serif JP", serif;
+    line-height: 1.9;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { animation: none !important; transition: none !important; }
+  }
+
+  .sans {
+    font-family: "游ゴシック体", "Yu Gothic", "Hiragino Kaku Gothic ProN", "Noto Sans JP", sans-serif;
+  }
+
+  .wrap {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 0 28px;
+  }
+
+  .eyebrow {
+    font-family: "游ゴシック体", "Yu Gothic", "Hiragino Kaku Gothic ProN", "Noto Sans JP", sans-serif;
+    font-size: 12px;
+    letter-spacing: 0.28em;
+    color: var(--turmeric);
+    font-weight: 600;
+  }
+
+  /* ---------- hero ---------- */
+  .hero {
+    padding: 96px 0 64px;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .hero h1 {
+    font-size: clamp(32px, 5.4vw, 52px);
+    line-height: 1.5;
+    font-weight: 600;
+    margin: 22px 0 28px;
+    text-wrap: balance;
+    letter-spacing: 0.02em;
+  }
+
+  .hero h1 em {
+    font-style: normal;
+    color: var(--turmeric-deep);
+    border-bottom: 1px solid var(--turmeric-deep);
+  }
+
+  .hero p.lede {
+    font-family: "游ゴシック体", "Yu Gothic", "Hiragino Kaku Gothic ProN", "Noto Sans JP", sans-serif;
+    font-size: 16px;
+    color: var(--ink-soft);
+    max-width: 34em;
+    margin: 0 0 36px;
+  }
+
+  .cta-row {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
+  .cta {
+    font-family: "游ゴシック体", "Yu Gothic", "Hiragino Kaku Gothic ProN", "Noto Sans JP", sans-serif;
+    display: inline-block;
+    padding: 13px 30px;
+    background: var(--turmeric-deep);
+    color: #f6f0e2;
+    text-decoration: none;
+    font-size: 14px;
+    letter-spacing: 0.08em;
+    border: 1px solid var(--turmeric-deep);
+    transition: opacity 0.2s ease;
+  }
+  .cta:hover { opacity: 0.85; }
+  .cta:focus-visible { outline: 2px solid var(--turmeric); outline-offset: 3px; }
+
+  .cta.ghost {
+    background: transparent;
+    color: var(--ink);
+    border: 1px solid var(--line);
+  }
+
+  /* ---------- section shell ---------- */
+  section { padding: 64px 0; }
+  section + section { border-top: 1px solid var(--line); }
+
+  h2.section-title {
+    font-size: clamp(22px, 3.4vw, 28px);
+    font-weight: 600;
+    margin: 10px 0 30px;
+    text-wrap: balance;
+  }
+
+  /* ---------- problem framing ---------- */
+  .stat-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 28px;
+    margin-top: 40px;
+  }
+
+  .stat {
+    border-left: 1px solid var(--line);
+    padding-left: 18px;
+  }
+
+  .stat .num {
+    font-family: "游ゴシック体", "Yu Gothic", "Hiragino Kaku Gothic ProN", "Noto Sans JP", sans-serif;
+    font-variant-numeric: tabular-nums;
+    font-size: 34px;
+    font-weight: 700;
+    color: var(--turmeric-deep);
+    display: block;
+  }
+
+  .stat .label {
+    font-family: "游ゴシック体", "Yu Gothic", "Hiragino Kaku Gothic ProN", "Noto Sans JP", sans-serif;
+    font-size: 13px;
+    color: var(--ink-soft);
+    margin-top: 6px;
+  }
+
+  /* ---------- drawers (crop cards) ---------- */
+  .drawer {
+    background: var(--card-bg);
+    border: 1px solid var(--line);
+    padding: 34px 32px;
+    margin-bottom: 22px;
+    opacity: 0;
+    transform: translateY(14px);
+    animation: rise 0.6s ease forwards;
+  }
+  .drawer:nth-of-type(2) { animation-delay: 0.12s; }
+
+  @keyframes rise {
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .drawer { opacity: 1; transform: none; animation: none; }
+  }
+
+  .drawer-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 16px;
+    flex-wrap: wrap;
+    border-bottom: 1px solid var(--line);
+    padding-bottom: 16px;
+    margin-bottom: 18px;
+  }
+
+  .drawer-head .name {
+    font-size: 22px;
+    font-weight: 600;
+  }
+
+  .drawer-head .kana {
+    font-family: "游ゴシック体", "Yu Gothic", "Hiragino Kaku Gothic ProN", "Noto Sans JP", sans-serif;
+    font-size: 12px;
+    color: var(--ink-soft);
+    letter-spacing: 0.1em;
+  }
+
+  .tag {
+    font-family: "游ゴシック体", "Yu Gothic", "Hiragino Kaku Gothic ProN", "Noto Sans JP", sans-serif;
+    display: inline-block;
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    color: var(--moss);
+    border: 1px solid var(--moss);
+    padding: 3px 10px;
+    white-space: nowrap;
+  }
+
+  .drawer dl {
+    display: grid;
+    grid-template-columns: 96px 1fr;
+    gap: 12px 18px;
+    margin: 0;
+  }
+
+  .drawer dt {
+    font-family: "游ゴシック体", "Yu Gothic", "Hiragino Kaku Gothic ProN", "Noto Sans JP", sans-serif;
+    font-size: 12px;
+    color: var(--ink-soft);
+    letter-spacing: 0.04em;
+    padding-top: 2px;
+  }
+
+  .drawer dd {
+    margin: 0;
+    font-size: 15px;
+  }
+
+  /* ---------- founder story ---------- */
+  .story {
+    display: grid;
+    grid-template-columns: 88px 1fr;
+    gap: 24px;
+  }
+
+  .story .mark {
+    width: 56px;
+    height: 56px;
+    border: 1px solid var(--turmeric-deep);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: "游ゴシック体", "Yu Gothic", "Hiragino Kaku Gothic ProN", "Noto Sans JP", sans-serif;
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    color: var(--turmeric-deep);
+  }
+
+  .story p { margin: 0 0 16px; }
+  .story p:last-child { margin-bottom: 0; }
+
+  /* ---------- footer / contact ---------- */
+  footer {
+    padding: 56px 0 80px;
+    border-top: 1px solid var(--line);
+  }
+
+  footer .foot-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    flex-wrap: wrap;
+    gap: 24px;
+  }
+
+  footer .contact-line {
+    font-family: "游ゴシック体", "Yu Gothic", "Hiragino Kaku Gothic ProN", "Noto Sans JP", sans-serif;
+    font-size: 13px;
+    color: var(--ink-soft);
+  }
+
+  footer a.mail {
+    color: var(--turmeric-deep);
+    text-decoration: none;
+    border-bottom: 1px solid var(--turmeric-deep);
+  }
+
+  .sns-row {
+    display: flex;
+    gap: 18px;
+    margin-top: 14px;
+  }
+
+  .sns-row a {
+    font-family: "游ゴシック体", "Yu Gothic", "Hiragino Kaku Gothic ProN", "Noto Sans JP", sans-serif;
+    font-size: 12px;
+    letter-spacing: 0.04em;
+    color: var(--ink-soft);
+    text-decoration: none;
+    border-bottom: 1px solid var(--line);
+    padding-bottom: 2px;
+    transition: color 0.2s ease, border-color 0.2s ease;
+  }
+
+  .sns-row a:hover,
+  .sns-row a:focus-visible {
+    color: var(--turmeric-deep);
+    border-color: var(--turmeric-deep);
+  }
+
+  @media (max-width: 520px) {
+    .drawer dl { grid-template-columns: 1fr; gap: 4px 0; }
+    .drawer dt { padding-top: 10px; }
+    .story { grid-template-columns: 1fr; }
+  }
+</style>
+
+<div class="wrap hero">
+  <span class="eyebrow sans">LOW-GI FARM STORY — 静岡県三島市・長泉町の畑から</span>
+  <h1>血糖値の波を、<br /><em>経営の集中力</em>に変える畑がある。</h1>
+  <p class="lede">
+    DX推進の仕事で東京のエグゼクティブに向き合う一方、三島の畑にも通っています。
+    前任者からの引き継ぎがないまま借りた畑には、秋ウコンとキクイモがすでに根を
+    張っていました。忙しい経営者ほど後回しにしがちな「血糖値の乱高下」に、
+    まずはこの二つの根菜から向き合ってみませんか。
+  </p>
+  <div class="cta-row">
+    <a class="cta" href="mailto:hioguitar0730@gmail.com">試作サンプルを相談する</a>
+    <a class="cta ghost" href="#crops">まず作物を見る</a>
+  </div>
+</div>
+
+<section class="wrap">
+  <span class="eyebrow sans">MY LOW-GI SHIFT</span>
+  <h2 class="section-title">経営者に勧める前に、自分自身が実験台だった。</h2>
+  <p>
+    会議前の甘い菓子、移動中の眠気、夕方の集中力低下——多くは血糖値の急上昇と急降下が
+    引き起こしています。DX推進の仕事で東京のエグゼクティブと接する中で気づいた
+    このパターンに、まず自分の食生活を低GIへ転換することで向き合ってきました。
+    特別な置き換えではなく、日々の主食・間食・食べる順番を変えるだけで始められる対策です。
+  </p>
+  <div class="stat-row sans">
+    <div class="stat">
+      <span class="num">順番</span>
+      <span class="label">食物繊維・脂質を先に。同じ食事でも上昇幅が変わる(food order)</span>
+    </div>
+    <div class="stat">
+      <span class="num">冷却</span>
+      <span class="label">米や芋は一度冷ますとレジスタントスターチが増え、消化が緩やかに</span>
+    </div>
+    <div class="stat">
+      <span class="num">10〜20%</span>
+      <span class="label">酢を組み合わせると食後血糖値の上昇幅を抑えられる目安</span>
+    </div>
+  </div>
+</section>
+
+<section class="wrap" id="crops">
+  <span class="eyebrow sans">THE CROPS</span>
+  <h2 class="section-title">畑に、すでに答えがあった。</h2>
+  <p>
+    三島・長泉の畑では小麦(農林61号)、マルベリー、グミ、えごま、ムクナ豆なども
+    育てていますが、加工の手間が少なく、すでに自生している秋ウコンとキクイモから
+    小さく始めます。試して、評価して、スケールする——エフェクチュエーション的な
+    進め方です。
+  </p>
+
+  <div class="drawer">
+    <div class="drawer-head">
+      <div>
+        <div class="name">秋ウコン</div>
+        <div class="kana">Curcuma longa / あきうこん</div>
+      </div>
+      <span class="tag">低GI・肝機能サポート</span>
+    </div>
+    <dl>
+      <dt>栽培状況</dt>
+      <dd>畑に自生。毎年秋に収穫でき、追加の作付けコストがかからない。</dd>
+      <dt>低GIの理由</dt>
+      <dd>デンプン質が少なく、クルクミンなど機能性成分が糖代謝を穏やかにする。</dd>
+      <dt>想定商品</dt>
+      <dd>乾燥スライス・粉末。焙煎方法で香りの強弱を調整できる。</dd>
+    </dl>
+  </div>
+
+  <div class="drawer">
+    <div class="drawer-head">
+      <div>
+        <div class="name">キクイモ</div>
+        <div class="kana">Helianthus tuberosus / 菊芋</div>
+      </div>
+      <span class="tag">低GI・イヌリン豊富</span>
+    </div>
+    <dl>
+      <dt>栽培状況</dt>
+      <dd>畑に自生。繁殖力が強く、収穫量の見通しが立てやすい。</dd>
+      <dt>低GIの理由</dt>
+      <dd>主成分がイヌリン(食物繊維)で、でんぷんをほぼ含まないため血糖値への影響が小さい。</dd>
+      <dt>想定商品</dt>
+      <dd>乾燥チップス・粉末。汁物や炒め物への置き換え食材としても提案可能。</dd>
+    </dl>
+  </div>
+</section>
+
+<section class="wrap">
+  <span class="eyebrow sans">FOUNDER</span>
+  <h2 class="section-title">畑もコードも、ドライに判断する。</h2>
+  <div class="story">
+    <div class="mark sans">DX<br />×畑</div>
+    <div>
+      <p>
+        本業はDX推進・業務設計。建設会社のGoogle Workspace導入支援などを手がけながら、
+        三島の畑にも通っています。畑は前任者からの引き継ぎがないまま借りたため、
+        品種も管理履歴も分からないものが多く、まずは現状を淡々と把握するところから
+        始めました。
+      </p>
+      <p>
+        小麦(農林61号)は栽培歴が長い一方、販売には製粉・加工設備の投資が必要です。
+        今ある資源、すでに自生し毎年収穫できる秋ウコンとキクイモから動く——小ロットで
+        試し、評価してからスケールする判断パターンを、事業設計と同じやり方で
+        畑にも適用しています。
+      </p>
+    </div>
+  </div>
+</section>
+
+<footer class="wrap">
+  <div class="foot-row">
+    <div class="contact-line">
+      試作サンプルのご相談・卸のお問い合わせは<br />
+      <a class="mail" href="mailto:hioguitar0730@gmail.com">hioguitar0730@gmail.com</a> まで
+      <div class="sns-row">
+        <a href="https://www.instagram.com/noka_sustainable" target="_blank" rel="noopener noreferrer">Instagram</a>
+        <a href="https://www.linkedin.com/in/toshiyuki-hioki" target="_blank" rel="noopener noreferrer">LinkedIn</a>
+        <a href="https://www.facebook.com/share/1D5rMU7EpB/" target="_blank" rel="noopener noreferrer">Facebook</a>
+      </div>
+    </div>
+    <div class="contact-line">Low-GI Farm Story — 新規事業検討中</div>
+  </div>
+</footer>
