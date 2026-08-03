@@ -28,8 +28,8 @@ meta_style = ParagraphStyle("meta", fontName="IPAGothic", wordWrap="CJK", fontSi
 h2_style = ParagraphStyle("h2", fontName="IPAGothic", wordWrap="CJK", fontSize=13, leading=18, spaceBefore=12, spaceAfter=6, textColor=colors.HexColor("#1f3d5c"))
 company_style = ParagraphStyle("company", fontName="IPAGothic", wordWrap="CJK", fontSize=11.5, leading=16, spaceBefore=8, spaceAfter=2, textColor=colors.HexColor("#1f3d5c"))
 biz_style = ParagraphStyle("biz", fontName="IPAGothic", wordWrap="CJK", fontSize=9.5, leading=13, spaceAfter=4, textColor=colors.HexColor("#555555"))
-body_style = ParagraphStyle("body", fontName="IPAGothic", wordWrap="CJK", fontSize=9.5, leading=14, spaceAfter=3)
-label_style = ParagraphStyle("label", fontName="IPAGothic", wordWrap="CJK", fontSize=9.5, leading=14, spaceAfter=3, textColor=colors.HexColor("#1f3d5c"))
+body_style = ParagraphStyle("body", fontName="IPAGothic", wordWrap="CJK", fontSize=9.5, leading=15, spaceAfter=5)
+label_style = ParagraphStyle("label", fontName="IPAGothic", wordWrap="CJK", fontSize=9.5, leading=15, spaceAfter=5, textColor=colors.HexColor("#1f3d5c"))
 period_style = ParagraphStyle("period", fontName="IPAGothic", wordWrap="CJK", fontSize=9.5, leading=13)
 th_style = ParagraphStyle("th", fontName="IPAGothic", wordWrap="CJK", fontSize=9.5, leading=13, textColor=colors.white)
 
@@ -275,12 +275,12 @@ entries.append({
 })
 
 for e in entries:
-    header_block = [Paragraph(e["company"], company_style)]
+    block = [Paragraph(e["company"], company_style)]
     if e["biz"]:
-        header_block.append(Paragraph(e["biz"], biz_style))
-    story.append(KeepTogether(header_block))
-    story.append(entry_table(e["period"], e["summary"], e["body"], e["knowledge"]))
-    story.append(Spacer(1, 4))
+        block.append(Paragraph(e["biz"], biz_style))
+    block.append(entry_table(e["period"], e["summary"], e["body"], e["knowledge"]))
+    story.append(KeepTogether(block))
+    story.append(Spacer(1, 10))
 
 h2("■語学")
 body(["英語: ビジネスレベル。海外ベンダーとの会議ファシリテーションや資料作成の経験あり。"])
