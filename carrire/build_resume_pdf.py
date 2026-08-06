@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+import os
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.units import mm
 from reportlab.lib.styles import ParagraphStyle
@@ -11,8 +12,15 @@ from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.lib import colors
 
-FONT_PATH = "/usr/share/fonts/opentype/ipafont-gothic/ipag.ttf"
-pdfmetrics.registerFont(TTFont("IPAGothic", FONT_PATH))
+FONT_CANDIDATES = [
+    "/usr/share/fonts/opentype/ipafont-gothic/ipag.ttf",
+    "/Library/Fonts/Arial Unicode.ttf",
+]
+FONT_PATH = next((p for p in FONT_CANDIDATES if os.path.exists(p)), FONT_CANDIDATES[0])
+if FONT_PATH.endswith(".ttc"):
+    pdfmetrics.registerFont(TTFont("IPAGothic", FONT_PATH, subfontIndex=0))
+else:
+    pdfmetrics.registerFont(TTFont("IPAGothic", FONT_PATH))
 
 OUT = "toshiyuki-hioki_職務経歴書_20260803.pdf"
 
@@ -171,7 +179,7 @@ entries.append({
 entries.append({
     "company": "■トヨタ自動車株式会社（パート勤務）",
     "biz": "事業内容：次世代燃料電池の材料探索業務",
-    "period": "2023年7月\n～現在",
+    "period": "2023年7月\n～2024年3月",
     "summary": ["概要：サステナブルな次世代燃料電池の材料探索業務", "役割：小型電池の試作、データ検証、Pythonを用いたデータ整理", "規模：7名"],
     "body": [
         "・プロパーと連携し、データ自動管理ツールの開発(要件定義～詳細設計)。小型電池の設計/テスト。",
@@ -183,7 +191,7 @@ entries.append({
 entries.append({
     "company": "■トヨタ自動車株式会社（パート勤務）",
     "biz": "事業内容：新規事業立ち上げ業務",
-    "period": "2023年7月\n～現在",
+    "period": "2023年7月\n～2024年3月",
     "summary": ["概要：新規事業に対するコンサルティング（社内有志活動の一環）", "役割：事業構想に対するコンサルティング業務", "規模：２名"],
     "body": [
         "・プロパーの太陽光発電を活用した新規事業に対し、要件定義、顧客折衝、マーケティング。",
