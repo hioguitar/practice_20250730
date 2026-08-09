@@ -114,6 +114,65 @@
     overflow: hidden;
   }
   .affinity-mini > div { height: 100%; background: var(--pink); }
+  .rarity-badge {
+    display: inline-block;
+    font-size: 0.65em;
+    font-weight: bold;
+    padding: 2px 8px;
+    border-radius: 999px;
+    margin-bottom: 4px;
+    letter-spacing: 1px;
+  }
+  .modal-rarity { font-size: 0.75em; margin-bottom: 8px; }
+
+  /* Quiz panel */
+  .quiz-box {
+    background: #fff;
+    border-radius: 24px;
+    box-shadow: var(--card-shadow);
+    padding: 20px;
+    max-width: 480px;
+    margin: 0 auto 20px;
+  }
+  .quiz-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-weight: bold;
+    font-size: 0.9em;
+    margin-bottom: 10px;
+  }
+  .quiz-diff-badge { font-size: 0.85em; }
+  .quiz-question {
+    font-size: 1.05em;
+    font-weight: bold;
+    text-align: center;
+    margin: 10px 0 16px;
+  }
+  .quiz-choices {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+  .quiz-choice-btn {
+    background: var(--pink-light);
+    border: none;
+    border-radius: 12px;
+    padding: 12px 10px;
+    font-size: 0.9em;
+    font-weight: bold;
+    color: var(--text);
+    cursor: pointer;
+    transition: transform 0.1s;
+  }
+  .quiz-choice-btn:hover:not(:disabled) { transform: translateY(-2px); }
+  .quiz-choice-btn:disabled { cursor: default; opacity: 0.7; }
+  .quiz-choice-btn.correct { background: #c8f2d8; color: #1e8a4c; }
+  .quiz-choice-btn.wrong { background: #ffd9dd; color: #c23a52; }
+  .quiz-feedback { text-align: center; font-weight: bold; margin-top: 12px; min-height: 1.2em; }
+  .quiz-feedback.ok { color: #2fae66; }
+  .quiz-feedback.ng { color: #e0607a; }
+  .rarity-legend { font-size: 0.75em; font-weight: bold; margin: 4px 0 0; }
 
   /* Gacha panel */
   .gacha-box {
@@ -191,19 +250,31 @@
     transition: width 0.3s;
   }
   .lv-label { font-size: 0.85em; font-weight: bold; color: var(--purple); }
+  .talk-choices {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    margin-top: 14px;
+    flex-wrap: wrap;
+  }
   .talk-btn {
     background: var(--mint);
     border: none;
     color: #fff;
     font-weight: bold;
-    padding: 12px 26px;
+    padding: 10px 16px;
     border-radius: 999px;
-    font-size: 1em;
+    font-size: 0.85em;
     cursor: pointer;
     box-shadow: 0 5px 0 #45b394;
-    margin-top: 14px;
+  }
+  .talk-btn.deep {
+    background: var(--pink);
+    box-shadow: 0 5px 0 #e06f91;
   }
   .talk-btn:active { transform: translateY(3px); box-shadow: 0 2px 0 #45b394; }
+  .talk-btn.deep:active { box-shadow: 0 2px 0 #e06f91; }
+  .talk-hint { font-size: 0.7em; opacity: 0.6; margin: 8px 0 0; }
   .dialogue-log {
     margin-top: 12px;
     background: #faf8ff;
@@ -255,6 +326,7 @@
 <div class="stat-bar">
   <div class="stat-pill">💎 <span id="points">0</span> きずなポイント</div>
   <div class="stat-pill">👥 <span id="ownedCount">0</span> / <span id="totalCount">0</span> コレクション</div>
+  <div class="stat-pill" id="diffPill">🧠 難易度: ★☆☆ やさしい</div>
 </div>
 
 <nav class="tabs">
@@ -268,9 +340,25 @@
   </section>
 
   <section id="panelGacha" class="panel">
+    <div class="quiz-box">
+      <div class="quiz-header">
+        <span>🧠 雑学クイズに正解してポイントGET</span>
+        <span class="quiz-diff-badge" id="quizDiff"></span>
+      </div>
+      <p class="quiz-question" id="quizQuestion"></p>
+      <div class="quiz-choices" id="quizChoices"></div>
+      <p class="quiz-feedback" id="quizFeedback"></p>
+    </div>
+
     <div class="gacha-box">
       <div class="gacha-machine">🎁</div>
       <p>1回 <b>30</b> きずなポイントで新しい友達に出会える!</p>
+      <p class="rarity-legend">
+        <span style="color:#8d8d8d">N</span> ・
+        <span style="color:#4a90e2">R</span> ・
+        <span style="color:#b088f9">SR</span> ・
+        <span style="color:#e0a608">UR</span>
+      </p>
       <button class="gacha-btn" id="gachaBtn">出会いを探す</button>
       <div class="gacha-result" id="gachaResult"></div>
     </div>
@@ -287,146 +375,153 @@
 
 <script>
 (function() {
+  const RARITY_META = {
+    N:  { label: "ノーマル",       stars: "★☆☆☆", color: "#8d8d8d", bg: "#eeeeee", weight: 60 },
+    R:  { label: "レア",           stars: "★★☆☆", color: "#4a90e2", bg: "#e7f1fd", weight: 28 },
+    SR: { label: "スーパーレア",   stars: "★★★☆", color: "#b088f9", bg: "#f2ebff", weight: 10 },
+    UR: { label: "ウルトラレア",   stars: "★★★★", color: "#e0a608", bg: "#fff6de", weight: 2 }
+  };
+
   const FRIEND_DATA = [
-    { name: "みお", emoji: "🐰", topic: "ゲーム", catchphrase: "根はまっすぐな元気印の後輩",
+    { name: "みお", emoji: "🐰", topic: "ゲーム", rarity: "N", catchphrase: "根はまっすぐな元気印の後輩",
       lines: { lv1: ["あ、どうも!よろしくっす!", "先輩(?)、仲良くしてほしいっす"],
         lv2: ["今日も一緒にいれて嬉しいっす!", "なんか元気出るっす、ありがとうっす!"],
         lv3: ["もっと話したいこと山ほどあるっす!", "一緒にいると安心するっす〜"],
         lv4: ["ずっとこの調子でいたいっす!大好きっす!", "頼りにしてるっす、いつもありがとうっす!"],
         lv5: ["一生ついていくっす!!", "あなたのおかげで今の私があるっす!"] } },
-    { name: "たくみ", emoji: "🐻", topic: "読書", catchphrase: "クールに見えて情に厚い委員長",
+    { name: "たくみ", emoji: "🐻", topic: "読書", rarity: "R", catchphrase: "クールに見えて情に厚い委員長",
       lines: { lv1: ["たくみだ。よろしく頼む。", "特に用がなければ手短に済ませよう。"],
         lv2: ["君と話すのは、悪くないな。", "少しは気を許してもいいと思っている。"],
         lv3: ["正直に言うと、君といる時間は貴重だ。", "困ったことがあれば頼ってくれ。"],
         lv4: ["君は俺にとって特別な存在になった。", "らしくないと分かっているが……大切な友人だ。"],
         lv5: ["この先も、ずっと隣にいてくれ。", "君となら、どんな困難も乗り越えられる気がする。"] } },
-    { name: "さくら", emoji: "🐱", topic: "旅行", catchphrase: "上品だけど芯は強いお嬢様",
+    { name: "さくら", emoji: "🐱", topic: "旅行", rarity: "R", catchphrase: "上品だけど芯は強いお嬢様",
       lines: { lv1: ["初めまして、さくらと申しますわ。", "よろしくしていただけますと嬉しいですわ。"],
         lv2: ["あなたとお話しするのは楽しいですわ。", "今度お茶でもいかがですの?"],
         lv3: ["あなたには心を開いておりますのよ。", "こんな気持ちになるのは久しぶりですわ。"],
         lv4: ["あなたは私の大切な親友ですわ。", "いつも味方でいてくださって感謝していますわ。"],
         lv5: ["生涯あなたのお側にいたいですわ。", "あなたと出会えて本当に良かったですわ。"] } },
-    { name: "けんと", emoji: "🐼", topic: "スポーツ", catchphrase: "熱血まっしぐらなスポーツ少年",
+    { name: "けんと", emoji: "🐼", topic: "スポーツ", rarity: "N", catchphrase: "熱血まっしぐらなスポーツ少年",
       lines: { lv1: ["よっ、けんとだ!よろしくな!", "元気があれば何でもできるぜ!"],
         lv2: ["お前と話すと燃えてくるぜ!", "一緒に頑張ろうな!"],
         lv3: ["お前は俺の最高の相棒だぜ!", "困った時はいつでも呼んでくれよな!"],
         lv4: ["お前がいるから頑張れるんだぜ!", "この絆、一生モノだぜ!"],
         lv5: ["お前と一緒なら世界一だって目指せるぜ!", "ずっと隣で戦っていてくれ!"] } },
-    { name: "ゆい", emoji: "🐹", topic: "動物", catchphrase: "誰をも癒すおっとり系",
+    { name: "ゆい", emoji: "🐹", topic: "動物", rarity: "N", catchphrase: "誰をも癒すおっとり系",
       lines: { lv1: ["ゆいだよ〜、よろしくねぇ〜", "のんびりお話ししましょ〜"],
         lv2: ["あなたといると落ち着くなの〜", "ほっこりするのぉ〜"],
         lv3: ["もっとお話ししたいなぁって思うのぉ〜", "一緒にいると幸せなの〜"],
         lv4: ["あなたは大切な人なのぉ〜", "ずっとそばにいてほしいのぉ〜"],
         lv5: ["あなたと出会えて本当によかったのぉ〜", "この気持ち、ずっと変わらないよぉ〜"] } },
-    { name: "りく", emoji: "🦊", topic: "音楽", catchphrase: "いたずら好きな小悪魔系",
+    { name: "りく", emoji: "🦊", topic: "音楽", rarity: "R", catchphrase: "いたずら好きな小悪魔系",
       lines: { lv1: ["やあ、りくだよ。ちょっとイタズラしてもいい?", "君、面白そうだね〜"],
         lv2: ["君をからかうの楽しいんだもんね", "でも実はけっこう気に入ってるんだよ"],
         lv3: ["君にだけは本音で話せるんだもんね", "一緒にいて飽きないよ"],
         lv4: ["君は特別、他の誰とも違うんだもんね", "ずっと悪だくみの相棒でいてね"],
         lv5: ["君となら一生イタズラし放題だもんね", "本当に大好きだよ、隠さず言うね"] } },
-    { name: "あおい", emoji: "🐨", topic: "映画", catchphrase: "人見知りだけど優しい照れ屋",
+    { name: "あおい", emoji: "🐨", topic: "映画", rarity: "N", catchphrase: "人見知りだけど優しい照れ屋",
       lines: { lv1: ["あ、あおいです……よろしく、かな", "うまく話せなくてごめんね……"],
         lv2: ["君とは、少し話しやすい……かな", "緊張、少しほぐれてきたかも"],
         lv3: ["君といると安心する……気がする", "もっと話したいと思ってる、実は"],
         lv4: ["君は、特別な人……なんだと思う", "頼りにしてる、本当に"],
         lv5: ["ずっとそばにいたい……そう思ってる", "君のおかげで自分を好きになれた"] } },
-    { name: "はると", emoji: "🐸", topic: "ゲーム", catchphrase: "場を盛り上げるムードメーカー",
+    { name: "はると", emoji: "🐸", topic: "ゲーム", rarity: "N", catchphrase: "場を盛り上げるムードメーカー",
       lines: { lv1: ["はるとっす!よろしくっしょ!", "楽しいことしようぜ、な!"],
         lv2: ["君といると盛り上がるっしょ!", "最高の相棒じゃん!"],
         lv3: ["もっと一緒に騒ごうぜ!", "君となら何でも楽しいっしょ!"],
         lv4: ["君は俺のかけがえのない仲間だぜ!", "一生この関係続けような!"],
         lv5: ["君と過ごす毎日が宝物だぜ!", "ずっと隣で笑っててくれ!"] } },
-    { name: "ひなた", emoji: "🦁", topic: "スポーツ", catchphrase: "誇り高き自信家のボス気質",
+    { name: "ひなた", emoji: "🦁", topic: "スポーツ", rarity: "SR", catchphrase: "誇り高き自信家のボス気質",
       lines: { lv1: ["ひなたよ。覚えておきなさい。", "私と友達になれて光栄でしょ?"],
         lv2: ["あなた、なかなか見込みあるじゃない", "私が認めた相手なんだから胸を張りなさい"],
         lv3: ["あなたは私の特別な仲間よ", "そばにいると安心するに決まってるでしょ"],
         lv4: ["あなたは私にとって唯一無二の存在", "一緒なら何でも乗り越えられるに決まってる"],
         lv5: ["私の隣にいるのはあなたしかいないわ", "この絆は誰にも壊せないに決まってる"] } },
-    { name: "そら", emoji: "🐷", topic: "ごはん", catchphrase: "食いしん坊のグルメ番長",
+    { name: "そら", emoji: "🐷", topic: "ごはん", rarity: "N", catchphrase: "食いしん坊のグルメ番長",
       lines: { lv1: ["そらだよ、むぐ。よろしくね", "お腹すいた……何か食べよ"],
         lv2: ["君と食べるご飯、美味しいむぐ", "今度一緒にごはん行こうよ"],
         lv3: ["君となら何でも美味しく感じるむぐ", "一緒に食べる時間が幸せなんだ"],
         lv4: ["君は私の大切な食いしん坊仲間むぐ", "ずっと一緒にごはん食べようね"],
         lv5: ["君と過ごす食卓が一番の幸せむぐ", "一生この味を分かち合いたいな"] } },
-    { name: "みゆ", emoji: "🐥", topic: "音楽", catchphrase: "推し活に生きるオタク女子",
+    { name: "みゆ", emoji: "🐥", topic: "音楽", rarity: "N", catchphrase: "推し活に生きるオタク女子",
       lines: { lv1: ["みゆです、推しは正義!よろしく", "尊い出会いに感謝……!"],
         lv2: ["君との時間、尊いって気づいたよ", "推せる、君のこと推せる!"],
         lv3: ["君はもう私の中でガチ勢入りだよ", "一緒にいると幸せオーラ出てる"],
         lv4: ["君は私にとって尊すぎる存在だよ", "ずっと推し続けるって決めた"],
         lv5: ["君との出会いが人生最推しだよ", "一生あなたを尊く思い続けるね"] } },
-    { name: "だいち", emoji: "🐢", topic: "旅行", catchphrase: "何事にも動じないマイペース屋",
+    { name: "だいち", emoji: "🐢", topic: "旅行", rarity: "N", catchphrase: "何事にも動じないマイペース屋",
       lines: { lv1: ["だいちじゃ。よろしくのう。", "急ぐことはない、ゆっくりいこうかの"],
         lv2: ["君と話すのは心地よいのう", "焦らず、少しずつ仲を深めようかの"],
         lv3: ["君のペース、嫌いじゃないのう", "共にいる時間が増えて嬉しいのじゃ"],
         lv4: ["君は儂にとって大切な友じゃ", "この穏やかな時間、ずっと続けたいのう"],
         lv5: ["君と過ごす日々こそ、儂の宝じゃ", "これからもゆっくり歩んでいこうのう"] } },
-    { name: "こはる", emoji: "🦄", topic: "読書", catchphrase: "闇の力を秘めた中二病少女",
+    { name: "こはる", emoji: "🦄", topic: "読書", rarity: "SR", catchphrase: "闇の力を秘めた中二病少女",
       lines: { lv1: ["我が名はこはる……闇に選ばれし者よ", "ふっ、貴様が我と契約せし者か"],
         lv2: ["貴様との盟約、悪くないと認めよう", "我が力、少しは信用してもいいぞ"],
         lv3: ["貴様は我が数少ない同志だ", "この絆、封印を超えるものと知れ"],
         lv4: ["貴様は我にとって唯一無二のパートナーだ", "共に闇を歩む覚悟、揺るがぬ"],
         lv5: ["この魂、永遠に貴様と共にあらん", "貴様こそ、我が運命の伴侶と知れ"] } },
-    { name: "ゆうと", emoji: "🐯", topic: "ゲーム", catchphrase: "素直じゃないけど頑張り屋の後輩",
+    { name: "ゆうと", emoji: "🐯", topic: "ゲーム", rarity: "N", catchphrase: "素直じゃないけど頑張り屋の後輩",
       lines: { lv1: ["ゆうとだよ、よろしくっての", "別に懐いてるわけじゃないっての"],
         lv2: ["まあ、悪くない相手だと思ってるっての", "ちょっとは認めてやってもいいっての"],
         lv3: ["正直、頼りにしてるんだよっての", "もっと一緒にいたいと思ってるっての"],
         lv4: ["お前は俺にとって大事な奴だってのに気づいた", "素直に言う、大好きだっての"],
         lv5: ["一生お前についていくって決めたっての", "お前がいない人生とか考えられねえっての"] } },
-    { name: "あんな", emoji: "🐔", topic: "動物", catchphrase: "本当は優しいツンデレ",
+    { name: "あんな", emoji: "🐔", topic: "動物", rarity: "N", catchphrase: "本当は優しいツンデレ",
       lines: { lv1: ["べ、別にあんたと仲良くしたいわけじゃないんだからね", "たまたま話しかけてるだけなんだから"],
         lv2: ["ちょ、ちょっとは一緒にいてもいいけど……", "勘違いしないでよね、少しだけよ"],
         lv3: ["本当は、あんたといると楽しいんだからね", "素直じゃなくてごめん……ありがとう"],
         lv4: ["あんたは特別な存在なんだからね", "もう認める、大切な人だって"],
         lv5: ["す、好きだって言ってるんだからね!", "一生そばにいてよ、絶対だからね"] } },
-    { name: "しょう", emoji: "🦉", topic: "読書", catchphrase: "知的で物静かな読書家",
+    { name: "しょう", emoji: "🦉", topic: "読書", rarity: "R", catchphrase: "知的で物静かな読書家",
       lines: { lv1: ["しょうだ。本の続きを読みたいのでほどほどに。", "君に興味が湧いた、というわけだ"],
         lv2: ["君との会話は知的好奇心を刺激する、というわけだ", "また話しかけてくれると嬉しい、というわけだ"],
         lv3: ["君は私の話し相手として最適だ、というわけだ", "この時間が貴重だと気づいた、というわけだ"],
         lv4: ["君は私にとってかけがえのない友人だ、というわけだ", "これからも隣で語り合いたい、というわけだ"],
         lv5: ["君との物語はまだ続く、というわけだ", "生涯の友として、共に歩もう、というわけだ"] } },
-    { name: "のぞみ", emoji: "🐙", topic: "映画", catchphrase: "言葉少なで謎めいた存在",
+    { name: "のぞみ", emoji: "🐙", topic: "映画", rarity: "UR", catchphrase: "言葉少なで謎めいた存在",
       lines: { lv1: ["……のぞみ。", "……よろしく。"],
         lv2: ["……悪くない。", "……また来て。"],
         lv3: ["……君といると落ち着く。", "……もっと知りたい。"],
         lv4: ["……大切な人。", "……離れないで。"],
         lv5: ["……ずっと一緒に。", "……愛してる、多分。"] } },
-    { name: "れん", emoji: "🐺", topic: "スポーツ", catchphrase: "群れを嫌う一匹狼",
+    { name: "れん", emoji: "🐺", topic: "スポーツ", rarity: "SR", catchphrase: "群れを嫌う一匹狼",
       lines: { lv1: ["れんだ。あまり群れるのは好きじゃない。", "だが、お前は少し気になる。"],
         lv2: ["お前といる時間は悪くないと思っている。", "少しは心を許してもいいかもな。"],
         lv3: ["お前には本音で話せる、それが分かった。", "俺にとって特別な相手になりつつある。"],
         lv4: ["お前は俺の唯一無二の相棒だ。", "この絆、簡単には壊れない。"],
         lv5: ["お前と共にいる未来しか見えない。", "ずっと隣にいてくれ、それだけだ。"] } },
-    { name: "まゆ", emoji: "🐬", topic: "旅行", catchphrase: "マイワールド全開の天然さん",
+    { name: "まゆ", emoji: "🐬", topic: "旅行", rarity: "R", catchphrase: "マイワールド全開の天然さん",
       lines: { lv1: ["まゆだよ〜、よろしくなのだ〜", "今日はどんな冒険が待ってるのかな〜"],
         lv2: ["君と話すの楽しいなのだ〜", "不思議な縁を感じるのだ〜"],
         lv3: ["君は私の世界の大切な住人なのだ〜", "一緒にいると夢みたいなのだ〜"],
         lv4: ["君は私の宝物なのだ〜", "ずっとこの時間が続けばいいのになのだ〜"],
         lv5: ["君と見る世界が一番好きなのだ〜", "永遠に一緒にいようねなのだ〜"] } },
-    { name: "いつき", emoji: "🦔", topic: "ゲーム", catchphrase: "緊張しいだけど心優しい人見知り",
+    { name: "いつき", emoji: "🦔", topic: "ゲーム", rarity: "N", catchphrase: "緊張しいだけど心優しい人見知り",
       lines: { lv1: ["え、えと……いつきです……よろしくお願いします……", "う、うまく話せなくてごめんなさい……"],
         lv2: ["あ、あなたとは、少し話しやすいです……", "き、緊張が減ってきた気がします……"],
         lv3: ["実は、あなたといると安心するんです……", "も、もっと話したいと思ってます……"],
         lv4: ["あなたは私にとって特別な人です……", "ゆ、勇気を出して言います、大切な人です"],
         lv5: ["ずっとあなたのそばにいたいです……", "あなたのおかげで変われた気がします……ありがとう"] } },
-    { name: "ちはる", emoji: "🐝", topic: "スポーツ", catchphrase: "みんなを元気づけるリーダー気質",
+    { name: "ちはる", emoji: "🐝", topic: "スポーツ", rarity: "N", catchphrase: "みんなを元気づけるリーダー気質",
       lines: { lv1: ["ちはるだよっ!よろしくねっ!", "みんなで元気にいこうねっ!"],
         lv2: ["君といるとパワーが湧いてくるよっ!", "一緒に頑張ろうねっ!"],
         lv3: ["君は私の大事な仲間だよっ!", "もっとたくさんお話ししたいなっ!"],
         lv4: ["君は私にとってかけがえのない存在だよっ!", "ずっとこのチームでいようねっ!"],
         lv5: ["君と一緒なら何でも乗り越えられるよっ!", "一生の相棒だよ、大好きっ!"] } },
-    { name: "かい", emoji: "🐳", topic: "ごはん", catchphrase: "頼れる面倒見のいいお兄さん",
+    { name: "かい", emoji: "🐳", topic: "ごはん", rarity: "N", catchphrase: "頼れる面倒見のいいお兄さん",
       lines: { lv1: ["かいだ。よろしくな、気軽に頼っていいぞ。", "困ったことがあったら言えよ。"],
         lv2: ["お前と話すの、楽しいぞ。", "頼ってくれると嬉しいもんだぞ。"],
         lv3: ["お前は俺にとって大事な仲間だぞ。", "いつでも味方でいるからな。"],
         lv4: ["お前は俺の自慢の相棒だぞ。", "この関係、大事にしていきたいぞ。"],
         lv5: ["お前と過ごす日々が一番の宝物だぞ。", "一生そばで支えていくからな。"] } },
-    { name: "すず", emoji: "🦋", topic: "音楽", catchphrase: "夢見がちな芸術家肌",
+    { name: "すず", emoji: "🦋", topic: "音楽", rarity: "R", catchphrase: "夢見がちな芸術家肌",
       lines: { lv1: ["すずです、よろしく……絵になる出会いみたい", "あなたにインスピレーション感じるかも"],
         lv2: ["あなたとの時間、作品にしたくなるみたい", "一緒にいると創作意欲が湧くの"],
         lv3: ["あなたは私の大切なミューズみたい", "もっと近くで見ていたいな"],
         lv4: ["あなたは私の人生に欠かせない存在みたい", "この気持ち、絵でも言葉でも表せないくらい"],
         lv5: ["あなたと歩む未来が一番美しい作品みたい", "永遠にあなたを描き続けたいな"] } },
-    { name: "りょう", emoji: "🐧", topic: "読書", catchphrase: "みんなの世話を焼く委員長気質",
+    { name: "りょう", emoji: "🐧", topic: "読書", rarity: "N", catchphrase: "みんなの世話を焼く委員長気質",
       lines: { lv1: ["りょうです。困ったことがあれば言ってくださいね", "しっかり者でいたいので、頼ってくれて構いませんよ"],
         lv2: ["あなたのこと、少し気にかけているんですよ", "無理していませんか?心配になるでしょう"],
         lv3: ["あなたは私が守りたい大切な人になりました", "そばで支えたいと思っているんです"],
@@ -436,13 +531,45 @@
 
   const ROSTER = FRIEND_DATA.map((f, i) => ({ id: "f" + i, ...f }));
 
+  const DIFF_META = {
+    1: { label: "やさしい",   stars: "★☆☆", color: "#3bb273" },
+    2: { label: "ふつう",     stars: "★★☆", color: "#e0a30f" },
+    3: { label: "むずかしい", stars: "★★★", color: "#e0607a" }
+  };
+  const REWARD_BY_DIFF = { 1: 12, 2: 22, 3: 35 };
+
+  const QUESTIONS = [
+    { difficulty: 1, q: "日本の首都はどこ?", choices: ["大阪", "東京", "京都", "名古屋"], answer: 1 },
+    { difficulty: 1, q: "1年は何日?(うるう年を除く)", choices: ["364日", "365日", "366日", "360日"], answer: 1 },
+    { difficulty: 1, q: "虹は何色に例えられることが多い?", choices: ["5色", "6色", "7色", "8色"], answer: 2 },
+    { difficulty: 1, q: "水は1気圧でセ氏何度で沸騰する?", choices: ["90度", "100度", "110度", "120度"], answer: 1 },
+    { difficulty: 1, q: "「こんにちは」を英語で言うと?", choices: ["Good night", "Hello", "Goodbye", "Sorry"], answer: 1 },
+    { difficulty: 1, q: "1週間は何日?", choices: ["5日", "6日", "7日", "8日"], answer: 2 },
+    { difficulty: 2, q: "成人の骨はおよそ何本?", choices: ["106本", "206本", "306本", "406本"], answer: 1 },
+    { difficulty: 2, q: "世界で一番面積が大きい国は?", choices: ["アメリカ", "中国", "カナダ", "ロシア"], answer: 3 },
+    { difficulty: 2, q: "光の速さは秒速およそ何km?", choices: ["3千km", "3万km", "30万km", "300万km"], answer: 2 },
+    { difficulty: 2, q: "「油断□□」に入る言葉は?", choices: ["大敵", "一番", "絶好", "無用"], answer: 0 },
+    { difficulty: 2, q: "人間の心臓は1日に約何回拍動する?", choices: ["1万回", "3万回", "10万回", "50万回"], answer: 2 },
+    { difficulty: 2, q: "日本で一番高い山は?", choices: ["富士山", "槍ヶ岳", "北岳", "御嶽山"], answer: 0 },
+    { difficulty: 3, q: "元素記号「Au」は何の元素?", choices: ["銀", "銅", "金", "アルミニウム"], answer: 2 },
+    { difficulty: 3, q: "世界最古の企業と言われる金剛組の創業は何世紀?", choices: ["6世紀", "10世紀", "14世紀", "18世紀"], answer: 0 },
+    { difficulty: 3, q: "DNAの二重らせん構造をワトソンと共に発見したのは誰?", choices: ["アインシュタイン", "クリック", "ダーウィン", "ニュートン"], answer: 1 },
+    { difficulty: 3, q: "「一石二鳥」に相当する英語のことわざは?", choices: ["Kill two birds with one stone", "Better late than never", "Actions speak louder than words", "A piece of cake"], answer: 0 },
+    { difficulty: 3, q: "日本国憲法が施行されたのは西暦何年?", choices: ["1945年", "1946年", "1947年", "1950年"], answer: 2 },
+    { difficulty: 3, q: "人体で最も硬い部分はどこ?", choices: ["骨", "爪", "歯のエナメル質", "軟骨"], answer: 2 }
+  ];
+
   const SAVE_KEY = "tomocolle_save_v1";
   function loadState() {
     try {
       const raw = localStorage.getItem(SAVE_KEY);
-      if (raw) return JSON.parse(raw);
+      if (raw) {
+        const s = JSON.parse(raw);
+        if (!s.difficulty) s.difficulty = 1;
+        return s;
+      }
     } catch (e) {}
-    return { points: 30, friends: {} };
+    return { points: 30, friends: {}, difficulty: 1 };
   }
   function saveState() { localStorage.setItem(SAVE_KEY, JSON.stringify(state)); }
 
@@ -472,6 +599,10 @@
     document.getElementById("points").textContent = state.points;
     document.getElementById("ownedCount").textContent = ownedIds().length;
     document.getElementById("totalCount").textContent = ROSTER.length;
+    const dm = DIFF_META[state.difficulty];
+    const diffPill = document.getElementById("diffPill");
+    diffPill.textContent = `🧠 難易度: ${dm.stars} ${dm.label}`;
+    diffPill.style.color = dm.color;
     updateGachaBtn();
   }
 
@@ -485,7 +616,10 @@
       if (owned) {
         const aff = affinity(f.id);
         const lv = levelInfo(aff);
+        const rm = RARITY_META[f.rarity];
+        card.style.borderColor = rm.color;
         card.innerHTML = `
+          <div class="rarity-badge" style="background:${rm.bg};color:${rm.color}">${rm.stars}</div>
           <div class="emoji">${f.emoji}</div>
           <div class="name">${f.name}</div>
           <div class="lv">Lv.${lv.lv} ${lv.label}</div>
@@ -507,31 +641,45 @@
     const f = ROSTER.find(x => x.id === id);
     const aff = affinity(id);
     const lv = levelInfo(aff);
+    const rm = RARITY_META[f.rarity];
     const modal = document.getElementById("modal");
     modal.innerHTML = `
+      <div class="rarity-badge modal-rarity" style="background:${rm.bg};color:${rm.color}">${rm.stars} ${rm.label}</div>
       <div class="emoji">${f.emoji}</div>
       <h2>${f.name}</h2>
       <div class="topic">好きな話題: ${f.topic}</div>
       <div class="catchphrase">${f.catchphrase}</div>
       <div class="lv-label">Lv.${lv.lv} ${lv.label} (${aff}/100)</div>
       <div class="affinity-bar"><div style="width:${aff}%"></div></div>
-      <button class="talk-btn" id="talkBtn">💬 話しかける</button>
+      <div class="talk-choices">
+        <button class="talk-btn casual" id="talkCasualBtn">🌱 気軽に話す</button>
+        <button class="talk-btn deep" id="talkDeepBtn">🔥 深く踏み込んで話す</button>
+      </div>
+      <p class="talk-hint">深く話すと好感度が伸びる代わりに、クイズの難易度も上がるよ</p>
       <div class="dialogue-log" id="dialogueLog">まだ何も話していません</div>
       <button class="close-btn" id="closeModal">閉じる</button>
     `;
     document.getElementById("overlay").classList.add("show");
     document.getElementById("closeModal").addEventListener("click", closeModal);
-    document.getElementById("talkBtn").addEventListener("click", () => talkTo(id));
+    document.getElementById("talkCasualBtn").addEventListener("click", () => talkTo(id, "casual"));
+    document.getElementById("talkDeepBtn").addEventListener("click", () => talkTo(id, "deep"));
   }
   function closeModal() { document.getElementById("overlay").classList.remove("show"); }
 
-  function talkTo(id) {
+  function talkTo(id, style) {
     const rec = state.friends[id];
     if (!rec) return;
     const before = rec.affinity;
-    const gain = before >= 90 ? 1 : (Math.floor(Math.random() * 3) + 2); // 2-4, slows near max
+    let gain;
+    if (style === "deep") {
+      gain = before >= 90 ? 1 : (Math.floor(Math.random() * 3) + 3); // 3-5
+      state.difficulty = Math.min(3, state.difficulty + 1);
+    } else {
+      gain = before >= 90 ? 1 : (Math.floor(Math.random() * 2) + 1); // 1-2
+      state.difficulty = Math.max(1, state.difficulty - 1);
+    }
     rec.affinity = Math.min(100, rec.affinity + gain);
-    const pointGain = 3 + Math.floor(rec.affinity / 25);
+    const pointGain = gain;
     state.points += pointGain;
     saveState();
 
@@ -551,10 +699,20 @@
     updateGachaBtn();
   }
 
+  function weightedPick(list) {
+    const total = list.reduce((sum, f) => sum + RARITY_META[f.rarity].weight, 0);
+    let r = Math.random() * total;
+    for (const f of list) {
+      r -= RARITY_META[f.rarity].weight;
+      if (r <= 0) return f;
+    }
+    return list[list.length - 1];
+  }
+
   const GACHA_COST = 30;
   function doGacha() {
     if (state.points < GACHA_COST) {
-      showToast("きずなポイントが足りないよ!友達と話して集めよう");
+      showToast("きずなポイントが足りないよ!クイズに正解して集めよう");
       return;
     }
     state.points -= GACHA_COST;
@@ -562,27 +720,30 @@
     const unowned = ROSTER.filter(f => !isOwned(f.id));
     let picked, isNew;
     if (unowned.length > 0 && Math.random() < 0.7) {
-      picked = unowned[Math.floor(Math.random() * unowned.length)];
+      picked = weightedPick(unowned);
       isNew = true;
     } else {
-      picked = ROSTER[Math.floor(Math.random() * ROSTER.length)];
+      picked = weightedPick(ROSTER);
       isNew = !isOwned(picked.id);
     }
 
+    const rm = RARITY_META[picked.rarity];
     const resultBox = document.getElementById("gachaResult");
     if (isNew) {
       state.friends[picked.id] = { affinity: 5 };
       resultBox.innerHTML = `
+        <div class="rarity-badge modal-rarity" style="background:${rm.bg};color:${rm.color}">${rm.stars} ${rm.label}</div>
         <div class="emoji">${picked.emoji}</div>
         <p><b>${picked.name}</b> と友達になった!</p>
         <p style="font-size:0.8em;opacity:0.7">好きな話題: ${picked.topic}</p>
       `;
-      showToast(`🎉 新しい友達: ${picked.name}`);
+      showToast(`🎉 ${rm.label}の新しい友達: ${picked.name}`);
     } else {
       const rec = state.friends[picked.id];
       const gain = 8;
       rec.affinity = Math.min(100, rec.affinity + gain);
       resultBox.innerHTML = `
+        <div class="rarity-badge modal-rarity" style="background:${rm.bg};color:${rm.color}">${rm.stars} ${rm.label}</div>
         <div class="emoji">${picked.emoji}</div>
         <p><b>${picked.name}</b> と再会! 好感度 +${gain}</p>
       `;
@@ -602,6 +763,53 @@
     document.getElementById("gachaBtn").disabled = state.points < GACHA_COST;
   }
 
+  let currentQuestion = null;
+  function loadQuestion() {
+    const pool = QUESTIONS.filter(q => q.difficulty === state.difficulty);
+    currentQuestion = pool[Math.floor(Math.random() * pool.length)];
+    renderQuiz();
+  }
+
+  function renderQuiz() {
+    const dm = DIFF_META[state.difficulty];
+    const badge = document.getElementById("quizDiff");
+    badge.textContent = `${dm.stars} ${dm.label}`;
+    badge.style.color = dm.color;
+    document.getElementById("quizQuestion").textContent = currentQuestion.q;
+    const choicesDiv = document.getElementById("quizChoices");
+    choicesDiv.innerHTML = "";
+    currentQuestion.choices.forEach((c, i) => {
+      const btn = document.createElement("button");
+      btn.className = "quiz-choice-btn";
+      btn.textContent = c;
+      btn.addEventListener("click", () => answerQuiz(i, btn));
+      choicesDiv.appendChild(btn);
+    });
+    document.getElementById("quizFeedback").textContent = "";
+  }
+
+  function answerQuiz(i, btn) {
+    document.querySelectorAll(".quiz-choice-btn").forEach(b => b.disabled = true);
+    const correct = i === currentQuestion.answer;
+    const reward = REWARD_BY_DIFF[state.difficulty];
+    const feedback = document.getElementById("quizFeedback");
+    if (correct) {
+      state.points += reward;
+      btn.classList.add("correct");
+      feedback.textContent = `✅ 正解! +${reward}💎`;
+      feedback.className = "quiz-feedback ok";
+      showToast(`正解! +${reward}きずなポイント`);
+    } else {
+      btn.classList.add("wrong");
+      const correctText = currentQuestion.choices[currentQuestion.answer];
+      feedback.textContent = `❌ 残念…正解は「${correctText}」`;
+      feedback.className = "quiz-feedback ng";
+    }
+    saveState();
+    renderStats();
+    setTimeout(loadQuestion, 1100);
+  }
+
   function switchTab(tab) {
     document.getElementById("tabCollection").classList.toggle("active", tab === "collection");
     document.getElementById("tabGacha").classList.toggle("active", tab === "gacha");
@@ -619,6 +827,7 @@
   renderStats();
   renderGrid();
   updateGachaBtn();
+  loadQuestion();
 })();
 </script>
 </body>
