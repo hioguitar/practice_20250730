@@ -835,9 +835,22 @@
     if (e.target.id === "overlay") closeModal();
   });
   document.getElementById("resetBtn").addEventListener("click", () => {
-    if (!confirm("本当に最初からやり直しますか?集めた友達や好感度はすべて消えます。")) return;
-    localStorage.removeItem(SAVE_KEY);
-    location.reload();
+    const modal = document.getElementById("modal");
+    modal.innerHTML = `
+      <div class="emoji">⚠️</div>
+      <h2>最初からやり直す?</h2>
+      <p style="font-size:0.9em; opacity:0.8;">集めた友達・好感度・ポイントはすべて消えます。この操作は取り消せません。</p>
+      <div class="talk-choices">
+        <button class="talk-btn deep" id="confirmResetBtn">やり直す</button>
+        <button class="talk-btn casual" id="cancelResetBtn">やめる</button>
+      </div>
+    `;
+    document.getElementById("overlay").classList.add("show");
+    document.getElementById("cancelResetBtn").addEventListener("click", closeModal);
+    document.getElementById("confirmResetBtn").addEventListener("click", () => {
+      localStorage.removeItem(SAVE_KEY);
+      location.reload();
+    });
   });
 
   renderStats();
