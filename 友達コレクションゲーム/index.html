@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ともコレ! 友達コレクションゲーム</title>
+<style>
+  :root {
+    --pink: #ff8fab;
+    --pink-light: #ffe3ec;
+    --purple: #b088f9;
+    --yellow: #ffd166;
+    --mint: #6fe3c0;
+    --bg: #fff6fa;
+    --text: #5a3e5a;
+    --card-shadow: 0 6px 0 rgba(0,0,0,0.08);
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: "Hiragino Maru Gothic ProN", "Rounded Mplus 1c", "Yu Gothic", sans-serif;
+    background: linear-gradient(160deg, #fff6fa 0%, #ffeef5 40%, #f0e8ff 100%);
+    color: var(--text);
+    min-height: 100vh;
+    padding-bottom: 40px;
+  }
+  header {
+    text-align: center;
+    padding: 22px 12px 10px;
+  }
+  header h1 {
+    margin: 0;
+    font-size: 1.8em;
+    color: var(--pink);
+    text-shadow: 2px 2px 0 #fff;
+    letter-spacing: 2px;
+  }
+  header p { margin: 4px 0 0; font-size: 0.85em; opacity: 0.7; }
+
+  .stat-bar {
+    display: flex;
+    justify-content: center;
+    gap: 14px;
+    margin: 14px auto;
+    flex-wrap: wrap;
+  }
+  .stat-pill {
+    background: #fff;
+    border-radius: 999px;
+    padding: 8px 18px;
+    box-shadow: var(--card-shadow);
+    font-weight: bold;
+    font-size: 0.95em;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  nav.tabs {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin: 10px 0 20px;
+  }
+  nav.tabs button {
+    border: none;
+    background: #fff;
+    color: var(--text);
+    padding: 10px 22px;
+    border-radius: 999px;
+    font-weight: bold;
+    cursor: pointer;
+    box-shadow: var(--card-shadow);
+    font-size: 0.95em;
+    transition: transform 0.1s;
+  }
+  nav.tabs button.active {
+    background: var(--pink);
+    color: #fff;
+  }
+  nav.tabs button:hover { transform: translateY(-2px); }
+
+  main { max-width: 900px; margin: 0 auto; padding: 0 16px; }
+  .panel { display: none; }
+  .panel.active { display: block; }
+
+  /* Collection grid */
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 14px;
+  }
+  .friend-card {
+    background: #fff;
+    border-radius: 18px;
+    box-shadow: var(--card-shadow);
+    padding: 12px 8px 10px;
+    text-align: center;
+    cursor: pointer;
+    transition: transform 0.12s;
+    border: 3px solid transparent;
+  }
+  .friend-card:hover { transform: translateY(-4px) scale(1.03); }
+  .friend-card.locked { opacity: 0.55; cursor: default; }
+  .friend-card.locked:hover { transform: none; }
+  .friend-card .emoji { font-size: 2.4em; }
+  .friend-card .name { font-size: 0.85em; font-weight: bold; margin-top: 4px; }
+  .friend-card .lv { font-size: 0.7em; color: var(--purple); }
+  .affinity-mini {
+    height: 6px;
+    background: var(--pink-light);
+    border-radius: 4px;
+    margin-top: 6px;
+    overflow: hidden;
+  }
+  .affinity-mini > div { height: 100%; background: var(--pink); }
+
+  /* Gacha panel */
+  .gacha-box {
+    text-align: center;
+    background: #fff;
+    border-radius: 24px;
+    box-shadow: var(--card-shadow);
+    padding: 30px 20px;
+    max-width: 420px;
+    margin: 0 auto;
+  }
+  .gacha-machine {
+    font-size: 5em;
+    margin-bottom: 10px;
+  }
+  .gacha-btn {
+    background: var(--purple);
+    color: #fff;
+    border: none;
+    padding: 14px 30px;
+    border-radius: 999px;
+    font-size: 1.1em;
+    font-weight: bold;
+    cursor: pointer;
+    box-shadow: 0 5px 0 #8a5fd6;
+    margin-top: 10px;
+  }
+  .gacha-btn:active { transform: translateY(3px); box-shadow: 0 2px 0 #8a5fd6; }
+  .gacha-btn:disabled { background: #ccc; box-shadow: 0 5px 0 #999; cursor: not-allowed; }
+  .gacha-result {
+    margin-top: 20px;
+    padding: 16px;
+    border-radius: 16px;
+    background: var(--pink-light);
+    display: none;
+  }
+  .gacha-result.show { display: block; animation: pop 0.35s ease; }
+  @keyframes pop { 0% { transform: scale(0.5); opacity: 0;} 100% { transform: scale(1); opacity: 1; } }
+  .gacha-result .emoji { font-size: 3.5em; }
+
+  /* Modal */
+  .overlay {
+    position: fixed; inset: 0;
+    background: rgba(90, 62, 90, 0.45);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    z-index: 50;
+  }
+  .overlay.show { display: flex; }
+  .modal {
+    background: #fff;
+    border-radius: 22px;
+    padding: 24px;
+    max-width: 380px;
+    width: 100%;
+    text-align: center;
+    box-shadow: 0 10px 0 rgba(0,0,0,0.1);
+  }
+  .modal .emoji { font-size: 4em; }
+  .modal h2 { margin: 6px 0 2px; color: var(--pink); }
+  .modal .topic { font-size: 0.85em; color: var(--purple); margin-bottom: 6px; }
+  .modal .catchphrase { font-style: italic; font-size: 0.9em; opacity: 0.75; margin-bottom: 10px; }
+  .affinity-bar {
+    height: 14px;
+    background: var(--pink-light);
+    border-radius: 8px;
+    overflow: hidden;
+    margin: 6px 0;
+  }
+  .affinity-bar > div {
+    height: 100%;
+    background: linear-gradient(90deg, var(--pink), var(--purple));
+    transition: width 0.3s;
+  }
+  .lv-label { font-size: 0.85em; font-weight: bold; color: var(--purple); }
+  .talk-btn {
+    background: var(--mint);
+    border: none;
+    color: #fff;
+    font-weight: bold;
+    padding: 12px 26px;
+    border-radius: 999px;
+    font-size: 1em;
+    cursor: pointer;
+    box-shadow: 0 5px 0 #45b394;
+    margin-top: 14px;
+  }
+  .talk-btn:active { transform: translateY(3px); box-shadow: 0 2px 0 #45b394; }
+  .dialogue-log {
+    margin-top: 12px;
+    background: #faf8ff;
+    border-radius: 12px;
+    padding: 10px;
+    font-size: 0.85em;
+    min-height: 40px;
+    text-align: left;
+  }
+  .close-btn {
+    margin-top: 14px;
+    background: none;
+    border: none;
+    color: #aaa;
+    text-decoration: underline;
+    cursor: pointer;
+  }
+  .toast {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--purple);
+    color: #fff;
+    padding: 10px 20px;
+    border-radius: 999px;
+    font-weight: bold;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s, transform 0.25s;
+    z-index: 100;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(-8px); }
+  footer {
+    text-align: center;
+    font-size: 0.75em;
+    opacity: 0.5;
+    margin-top: 30px;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>🌸 ともコレ! 🌸</h1>
+  <p>友達をコレクションして、なかよくなろう</p>
+</header>
+
+<div class="stat-bar">
+  <div class="stat-pill">💎 <span id="points">0</span> きずなポイント</div>
+  <div class="stat-pill">👥 <span id="ownedCount">0</span> / <span id="totalCount">0</span> コレクション</div>
+</div>
+
+<nav class="tabs">
+  <button id="tabCollection" class="active">📖 コレクション</button>
+  <button id="tabGacha">🎰 出会いガチャ</button>
+</nav>
+
+<main>
+  <section id="panelCollection" class="panel active">
+    <div class="grid" id="grid"></div>
+  </section>
+
+  <section id="panelGacha" class="panel">
+    <div class="gacha-box">
+      <div class="gacha-machine">🎁</div>
+      <p>1回 <b>30</b> きずなポイントで新しい友達に出会える!</p>
+      <button class="gacha-btn" id="gachaBtn">出会いを探す</button>
+      <div class="gacha-result" id="gachaResult"></div>
+    </div>
+  </section>
+</main>
+
+<div class="overlay" id="overlay">
+  <div class="modal" id="modal"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<footer>進行状況は自動でこの端末に保存されます</footer>
+
+<script>
+(function() {
+  const TOPICS = ["映画","スポーツ","音楽","ゲーム","旅行","ごはん","読書","動物"];
+  const NAME_POOL = [
+    ["みお","🐰"], ["たくみ","🐻"], ["さくら","🐱"], ["けんと","🐼"],
+    ["ゆい","🐹"], ["りく","🦊"], ["あおい","🐨"], ["はると","🐸"],
+    ["ひなた","🦁"], ["そら","🐷"], ["みゆ","🐥"], ["だいち","🐢"],
+    ["こはる","🦄"], ["ゆうと","🐯"], ["あんな","🐔"], ["しょう","🦉"],
+    ["のぞみ","🐙"], ["れん","🐺"], ["まゆ","🐬"], ["いつき","🦔"],
+    ["ちはる","🐝"], ["かい","🐳"], ["すず","🦋"], ["りょう","🐧"]
+  ];
+  const CATCHPHRASES = [
+    "今日もいい天気だね!","お腹すいたな〜","なんか楽しいことないかな?",
+    "最近ハマってることがあるんだ","一緒に遊べて嬉しいな","ちょっと聞いてよ!",
+    "実はね、秘密の話があるんだ","君と話すの好きだよ"
+  ];
+  const TALK_LINES = [
+    "「聞いて聞いて!今日こんなことがあったの!」",
+    "「一緒にいると時間があっという間だね」",
+    "「今度どこか遊びに行かない?」",
+    "「ちょっと悩みがあって…聞いてくれる?」",
+    "「ありがとう、話せてスッキリした!」",
+    "「君のそういうところ、好きだな」",
+    "「最近どう?元気にしてた?」",
+    "「なんだか今日は特別な日な気がする」"
+  ];
+
+  function buildRoster() {
+    return NAME_POOL.map((n, i) => ({
+      id: "f" + i,
+      name: n[0],
+      emoji: n[1],
+      topic: TOPICS[i % TOPICS.length],
+      catchphrase: CATCHPHRASES[i % CATCHPHRASES.length]
+    }));
+  }
+  const ROSTER = buildRoster();
+
+  const SAVE_KEY = "tomocolle_save_v1";
+  function loadState() {
+    try {
+      const raw = localStorage.getItem(SAVE_KEY);
+      if (raw) return JSON.parse(raw);
+    } catch (e) {}
+    return { points: 30, friends: {} };
+  }
+  function saveState() { localStorage.setItem(SAVE_KEY, JSON.stringify(state)); }
+
+  const state = loadState();
+
+  function ownedIds() { return Object.keys(state.friends); }
+  function isOwned(id) { return !!state.friends[id]; }
+  function affinity(id) { return state.friends[id] ? state.friends[id].affinity : 0; }
+
+  function levelInfo(aff) {
+    if (aff >= 80) return { lv: 5, label: "ずっと一緒" };
+    if (aff >= 60) return { lv: 4, label: "親友" };
+    if (aff >= 40) return { lv: 3, label: "仲良し" };
+    if (aff >= 20) return { lv: 2, label: "友達" };
+    return { lv: 1, label: "顔見知り" };
+  }
+
+  function showToast(msg) {
+    const t = document.getElementById("toast");
+    t.textContent = msg;
+    t.classList.add("show");
+    clearTimeout(showToast._t);
+    showToast._t = setTimeout(() => t.classList.remove("show"), 1800);
+  }
+
+  function renderStats() {
+    document.getElementById("points").textContent = state.points;
+    document.getElementById("ownedCount").textContent = ownedIds().length;
+    document.getElementById("totalCount").textContent = ROSTER.length;
+    updateGachaBtn();
+  }
+
+  function renderGrid() {
+    const grid = document.getElementById("grid");
+    grid.innerHTML = "";
+    ROSTER.forEach(f => {
+      const owned = isOwned(f.id);
+      const card = document.createElement("div");
+      card.className = "friend-card" + (owned ? "" : " locked");
+      if (owned) {
+        const aff = affinity(f.id);
+        const lv = levelInfo(aff);
+        card.innerHTML = `
+          <div class="emoji">${f.emoji}</div>
+          <div class="name">${f.name}</div>
+          <div class="lv">Lv.${lv.lv} ${lv.label}</div>
+          <div class="affinity-mini"><div style="width:${aff}%"></div></div>
+        `;
+        card.addEventListener("click", () => openModal(f.id));
+      } else {
+        card.innerHTML = `
+          <div class="emoji">❓</div>
+          <div class="name">？？？</div>
+          <div class="lv">未出会い</div>
+        `;
+      }
+      grid.appendChild(card);
+    });
+  }
+
+  function openModal(id) {
+    const f = ROSTER.find(x => x.id === id);
+    const aff = affinity(id);
+    const lv = levelInfo(aff);
+    const modal = document.getElementById("modal");
+    modal.innerHTML = `
+      <div class="emoji">${f.emoji}</div>
+      <h2>${f.name}</h2>
+      <div class="topic">好きな話題: ${f.topic}</div>
+      <div class="catchphrase">${f.catchphrase}</div>
+      <div class="lv-label">Lv.${lv.lv} ${lv.label} (${aff}/100)</div>
+      <div class="affinity-bar"><div style="width:${aff}%"></div></div>
+      <button class="talk-btn" id="talkBtn">💬 話しかける</button>
+      <div class="dialogue-log" id="dialogueLog">まだ何も話していません</div>
+      <button class="close-btn" id="closeModal">閉じる</button>
+    `;
+    document.getElementById("overlay").classList.add("show");
+    document.getElementById("closeModal").addEventListener("click", closeModal);
+    document.getElementById("talkBtn").addEventListener("click", () => talkTo(id));
+  }
+  function closeModal() { document.getElementById("overlay").classList.remove("show"); }
+
+  function talkTo(id) {
+    const rec = state.friends[id];
+    if (!rec) return;
+    const before = rec.affinity;
+    const gain = before >= 90 ? 1 : (Math.floor(Math.random() * 3) + 2); // 2-4, slows near max
+    rec.affinity = Math.min(100, rec.affinity + gain);
+    const pointGain = 3 + Math.floor(rec.affinity / 25);
+    state.points += pointGain;
+    saveState();
+
+    const line = TALK_LINES[Math.floor(Math.random() * TALK_LINES.length)];
+    document.getElementById("dialogueLog").textContent = line + `  (+${pointGain}💎)`;
+    const lv = levelInfo(rec.affinity);
+    document.querySelector(".lv-label").textContent = `Lv.${lv.lv} ${lv.label} (${rec.affinity}/100)`;
+    document.querySelector(".affinity-bar > div").style.width = rec.affinity + "%";
+
+    if (levelInfo(before).lv < lv.lv) {
+      showToast(`✨ ${ROSTER.find(f=>f.id===id).name} との仲が深まった! Lv.${lv.lv} ${lv.label}`);
+    }
+    renderStats();
+    renderGrid();
+    updateGachaBtn();
+  }
+
+  const GACHA_COST = 30;
+  function doGacha() {
+    if (state.points < GACHA_COST) {
+      showToast("きずなポイントが足りないよ!友達と話して集めよう");
+      return;
+    }
+    state.points -= GACHA_COST;
+
+    const unowned = ROSTER.filter(f => !isOwned(f.id));
+    let picked, isNew;
+    if (unowned.length > 0 && Math.random() < 0.7) {
+      picked = unowned[Math.floor(Math.random() * unowned.length)];
+      isNew = true;
+    } else {
+      picked = ROSTER[Math.floor(Math.random() * ROSTER.length)];
+      isNew = !isOwned(picked.id);
+    }
+
+    const resultBox = document.getElementById("gachaResult");
+    if (isNew) {
+      state.friends[picked.id] = { affinity: 5 };
+      resultBox.innerHTML = `
+        <div class="emoji">${picked.emoji}</div>
+        <p><b>${picked.name}</b> と友達になった!</p>
+        <p style="font-size:0.8em;opacity:0.7">好きな話題: ${picked.topic}</p>
+      `;
+      showToast(`🎉 新しい友達: ${picked.name}`);
+    } else {
+      const rec = state.friends[picked.id];
+      const gain = 8;
+      rec.affinity = Math.min(100, rec.affinity + gain);
+      resultBox.innerHTML = `
+        <div class="emoji">${picked.emoji}</div>
+        <p><b>${picked.name}</b> と再会! 好感度 +${gain}</p>
+      `;
+      showToast(`${picked.name} と再会したよ`);
+    }
+    resultBox.classList.remove("show");
+    void resultBox.offsetWidth;
+    resultBox.classList.add("show");
+
+    saveState();
+    renderStats();
+    renderGrid();
+    updateGachaBtn();
+  }
+
+  function updateGachaBtn() {
+    document.getElementById("gachaBtn").disabled = state.points < GACHA_COST;
+  }
+
+  function switchTab(tab) {
+    document.getElementById("tabCollection").classList.toggle("active", tab === "collection");
+    document.getElementById("tabGacha").classList.toggle("active", tab === "gacha");
+    document.getElementById("panelCollection").classList.toggle("active", tab === "collection");
+    document.getElementById("panelGacha").classList.toggle("active", tab === "gacha");
+  }
+
+  document.getElementById("tabCollection").addEventListener("click", () => switchTab("collection"));
+  document.getElementById("tabGacha").addEventListener("click", () => switchTab("gacha"));
+  document.getElementById("gachaBtn").addEventListener("click", doGacha);
+  document.getElementById("overlay").addEventListener("click", (e) => {
+    if (e.target.id === "overlay") closeModal();
+  });
+
+  renderStats();
+  renderGrid();
+  updateGachaBtn();
+})();
+</script>
+</body>
+</html>
