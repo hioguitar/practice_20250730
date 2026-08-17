@@ -22,7 +22,7 @@ if FONT_PATH.endswith(".ttc"):
 else:
     pdfmetrics.registerFont(TTFont("IPAGothic", FONT_PATH))
 
-OUT = "toshiyuki-hioki_職務経歴書_20260803.pdf"
+OUT = "toshiyuki-hioki_職務経歴書_20260817.pdf"
 
 doc = SimpleDocTemplate(
     OUT, pagesize=A4,
@@ -45,7 +45,7 @@ story = []
 
 story.append(Paragraph("職　務　経　歴　書", title_style))
 story.append(HRFlowable(width="100%", thickness=1, color=colors.HexColor("#1f3d5c"), spaceAfter=8))
-story.append(Paragraph("2026年8月3日現在", meta_style))
+story.append(Paragraph("2026年8月17日現在", meta_style))
 story.append(Paragraph("氏名　日置　俊行", meta_style))
 story.append(Spacer(1, 6))
 
