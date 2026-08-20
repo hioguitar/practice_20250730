@@ -14,6 +14,7 @@ from reportlab.lib import colors
 
 FONT_CANDIDATES = [
     "/usr/share/fonts/opentype/ipafont-gothic/ipag.ttf",
+    os.path.expanduser("~/Library/Fonts/ipag.ttf"),
     "/Library/Fonts/Arial Unicode.ttf",
 ]
 FONT_PATH = next((p for p in FONT_CANDIDATES if os.path.exists(p)), FONT_CANDIDATES[0])
@@ -22,7 +23,7 @@ if FONT_PATH.endswith(".ttc"):
 else:
     pdfmetrics.registerFont(TTFont("IPAGothic", FONT_PATH))
 
-OUT = "toshiyuki-hioki_職務経歴書_20260817.pdf"
+OUT = "toshiyuki-hioki_職務経歴書_20260820.pdf"
 
 doc = SimpleDocTemplate(
     OUT, pagesize=A4,
@@ -45,7 +46,7 @@ story = []
 
 story.append(Paragraph("職　務　経　歴　書", title_style))
 story.append(HRFlowable(width="100%", thickness=1, color=colors.HexColor("#1f3d5c"), spaceAfter=8))
-story.append(Paragraph("2026年8月17日現在", meta_style))
+story.append(Paragraph("2026年8月20日現在", meta_style))
 story.append(Paragraph("氏名　日置　俊行", meta_style))
 story.append(Spacer(1, 6))
 
